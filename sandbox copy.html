@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+
+    <script>
+        "use strict";
+
+        console.log("Sandbox script loaded");
+
+        function Person(name) {
+            this.name = name;
+        }
+
+        {
+            const person = new Person("Alice");
+            console.log(person.name); // Alice ✅
+        }
+
+        {
+            // Criar um objeto vazio
+            const person = {};
+            Person.call(person, "Charlie");
+            console.log(person.name);
+        }
+
+        {
+            const person = {};
+            Person.apply(person, ["Diana"]);
+            console.log(person.name);
+        }
+
+        {
+            const person = {}; // Create an empty object
+            const boundPerson = Person.bind(person); // Bind the function to `person4`
+            boundPerson("Eve"); // Call the bound function
+            console.log(person.name);
+        }
+
+        {
+            const person = Object.create(Person.prototype); // Create an empty object with Person's prototype
+            Person.call(person, "Frank"); // Call the constructor with `person` as `this`
+            console.log(person.name); // Frank ✅
+        }
+
+        {
+            function createPerson(name) {
+                return {
+                    name: name
+                };
+            }
+            const person = createPerson("Grace");
+            console.log(person.name); // Grace ✅
+        }
+
+
+        {
+            const person = Reflect.construct(Person, ["Hank"]);
+            console.log(person.name); // Hank ✅
+        }
+
+        {
+            class Person {
+                constructor(name) {
+                    this.name = name;
+                }
+            }
+            const person = new Person("Ivy");
+            console.log(person.name); // Ivy ✅
+        }
+
+        {
+            try {
+                const person = Person("Jack"); // sem new
+                console.log(person); // undefined
+            } catch (error) {
+                console.log("Error:", error.message); // Error: Cannot set properties of undefined (setting 'name')
+            }
+        }
+
+
+
+// | Method                 | Uses `this`? | Creates prototype?   | Calls constructor? |
+// | ---------------------- | ------------ | -------------------- | ------------------ |
+// | `new`                  | ✅            | ✅                    | ✅                  |
+// | `.call()` / `.apply()` | ✅            | ❌ (unless you do it) | ✅                  |
+// | `.bind()`              | ✅            | ❌                    | ❌ (until called)   |
+// | `Object.create()`      | ✅            | ✅                    | ✅ (manually)       |
+// | Factory function       | ❌            | ❌                    | ❌                  |
+// | `Reflect.construct()`  | ✅            | ✅                    | ✅                  |
+// | `class`                | ✅            | ✅                    | ✅                  |
+
+
+
+
+    
+
+
+
+    </script>
+</body>
+</html>
+

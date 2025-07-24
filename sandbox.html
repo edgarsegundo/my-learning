@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+
+    <script>
+        "use strict";
+
+        console.log("Sandbox script loaded");
+    
+
+        function Person1(name) {
+            this.name = name;
+        }
+
+        const person1 = new Person1("Alice");
+        console.log(person1.name); // Alice ✅
+
+
+
+        function Person2(name) {
+            this.name = name;
+        }
+
+        // Criar um objeto vazio
+        const person2 = {};
+        Person2.call(person2, "Charlie");
+
+        console.log(person2.name); // Charlie ✅
+
+
+        function Person3(name) {
+            this.name = name;
+        }
+
+        const person3 = {};
+        Person3.apply(person3, ["Diana"]);
+
+        console.log(person3.name); // Diana ✅
+
+
+
+        function Person4(name) {
+            this.name = name;
+        }
+
+        // Create an empty object
+        const person4 = {};
+
+        // Bind the function to `person4`
+        const boundPerson4 = Person4.bind(person4);
+
+        // Call the bound function
+        boundPerson4("Eve");
+
+        console.log(person4.name); // Eve ✅
+
+
+        function createPerson6(name) {
+            return {
+                name: name
+            };
+        }
+
+        const person6 = createPerson6("Grace");
+        console.log(person6.name); // Grace ✅
+
+
+
+        function Person7(name) {
+            this.name = name;
+        }
+
+        const person7 = Reflect.construct(Person7, ["Hank"]);
+        console.log(person7.name); // Hank ✅
+
+
+        class Person8 {
+            constructor(name) {
+                this.name = name;
+            }
+        }
+
+        const person8 = new Person8("Ivy");
+        console.log(person8.name); // Ivy ✅
+
+
+
+// | Method                 | Uses `this`? | Creates prototype?   | Calls constructor? |
+// | ---------------------- | ------------ | -------------------- | ------------------ |
+// | `new`                  | ✅            | ✅                    | ✅                  |
+// | `.call()` / `.apply()` | ✅            | ❌ (unless you do it) | ✅                  |
+// | `.bind()`              | ✅            | ❌                    | ❌ (until called)   |
+// | `Object.create()`      | ✅            | ✅                    | ✅ (manually)       |
+// | Factory function       | ❌            | ❌                    | ❌                  |
+// | `Reflect.construct()`  | ✅            | ✅                    | ✅                  |
+// | `class`                | ✅            | ✅                    | ✅                  |
+
+
+
+
+        // function Person(name) {
+        //     this.name = name;
+        // }
+
+        // const bob = Person("Bob"); // sem new
+        // console.log(bob); // undefined
+        // console.log(globalThis.name); // undefined (em modo estrito, erro: this === undefined)
+
+    
+
+
+
+    </script>
+</body>
+</html>
+

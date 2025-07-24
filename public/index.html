@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Interview Quiz - Tricky & Edge Cases</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .code-block {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            font-family: 'Courier New', monospace;
+        }
+        .answer-hidden {
+            display: none;
+        }
+        .answer-visible {
+            display: block;
+        }
+        .user-answer {
+            min-height: 80px;
+            resize: vertical;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">JavaScript Interview Quiz</h1>
+            <p class="text-lg text-gray-600">Tricky & Edge Cases - Test Your Knowledge</p>
+            <div class="mt-4">
+                <span class="text-sm text-gray-500">Progress: </span>
+                <span id="progress" class="text-sm font-semibold text-blue-600">0/30</span>
+            </div>
+        </header>
+
+        <div class="mb-6 flex justify-center space-x-4 flex-wrap gap-2">
+            <button id="prevBtn" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 disabled:opacity-50" disabled>Previous</button>
+            <button id="nextBtn" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Next</button>
+            <button id="showAllAnswers" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">Show All Answers</button>
+            <button id="clearAllAnswers" class="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600">Clear My Answers</button>
+        </div>
+
+        <div id="questionsContainer">
+            <!-- Questions will be dynamically inserted here -->
+        </div>
+
+        <div class="mt-8 text-center">
+            <button id="resetQuiz" class="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600">Reset Quiz</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                category: "Hoisting Questions",
+                title: "Variable Hoisting with var",
+                code: `console.log(a); // What's the output?
+var a = 5;
+console.log(a);`,
+                answer: "undefined, then 5",
+                explanation: "Variables declared with var are hoisted but not initialized. The first console.log runs before the assignment."
+            },
+            {
+                category: "Hoisting Questions",
+                title: "Function Hoisting vs Variable Hoisting",
+                code: `console.log(foo); // What's the output?
+console.log(bar); // What's the output?
+
+var foo = function() { return 'foo'; };
+function bar() { return 'bar'; }`,
+                answer: "undefined, then function bar() { return 'bar'; }",
+                explanation: "Function declarations are fully hoisted, function expressions are not. foo is hoisted as undefined, bar is fully hoisted."
+            },
+            {
+                category: "Hoisting Questions",
+                title: "Temporal Dead Zone",
+                code: `console.log(typeof a); // What's the output?
+console.log(typeof b); // What's the output?
+let a = 3;`,
+                answer: "ReferenceError for first line, undefined for second",
+                explanation: "let variables are in temporal dead zone before declaration. 'b' is never declared so typeof returns 'undefined'."
+            },
+            {
+                category: "Closure Questions",
+                title: "Classic Loop Closure Problem",
+                code: `for (var i = 0; i < 3; i++) {
+  setTimeout(function() {
+    console.log(i);
+  }, 100);
+}`,
+                answer: "Prints 3 three times",
+                explanation: "var is function-scoped and the closure captures the final value of i after the loop completes."
+            },
+            {
+                category: "Closure Questions",
+                title: "Module Pattern with Closure",
+                code: `var counter = (function() {
+  var count = 0;
+  return function() {
+    return ++count;
+  };
+})();
+
+console.log(counter()); // ?
+console.log(counter()); // ?`,
+                answer: "1, then 2",
+                explanation: "Each call increments the private count variable. The IIFE creates a closure that maintains the count state."
+            },
+            {
+                category: "Closure Questions",
+                title: "Closure with Parameters",
+                code: `function outer(x) {
+  return function(y) {
+    return function(z) {
+      return x + y + z;
+    };
+  };
+}
+
+var result = outer(1)(2)(3);
+console.log(result); // ?`,
+                answer: "6",
+                explanation: "This demonstrates currying and multiple levels of closure. Each function remembers the parameters from outer scopes."
+            },
+            {
+                category: "This Binding Questions",
+                title: "Method Context Loss",
+                code: `var person = {
+  name: 'John',
+  greet: function() {
+    console.log('Hello, ' + this.name);
+  }
+};
+
+var greetFunc = person.greet;
+greetFunc(); // What's the output?`,
+                answer: "Hello, undefined (or error in strict mode)",
+                explanation: "this is lost when the method is assigned to a variable. The function loses its original context."
+            },
+            {
+                category: "This Binding Questions",
+                title: "Arrow Functions and This",
+                code: `var obj = {
+  name: 'Alice',
+  regularFunction: function() {
+    console.log(this.name);
+  },
+  arrowFunction: () => {
+    console.log(this.name);
+  }
+};
+
+obj.regularFunction(); // ?
+obj.arrowFunction(); // ?`,
+                answer: "Alice, then undefined (or global name)",
+                explanation: "Arrow functions don't have their own this. They inherit this from the enclosing scope."
+            },
+            {
+                category: "This Binding Questions",
+                title: "Call, Apply, Bind",
+                code: `function greet() {
+  console.log(this.name);
+}
+
+var person1 = { name: 'John' };
+var person2 = { name: 'Jane' };
+
+var boundGreet = greet.bind(person1);
+boundGreet.call(person2); // What's the output?`,
+                answer: "John",
+                explanation: "Once bound, the this context cannot be changed. bind creates a permanently bound function."
+            },
+            {
+                category: "Scope and Variable Questions",
+                title: "Block Scope vs Function Scope",
+                code: `function test() {
+  if (true) {
+    var a = 1;
+    let b = 2;
+    const c = 3;
+  }
+  console.log(a); // ?
+  console.log(b); // ?
+  console.log(c); // ?
+}
+test();`,
+                answer: "1, then ReferenceError for both b and c",
+                explanation: "Only var is function-scoped. let and const are block-scoped and not accessible outside the if block."
+            },
+            {
+                category: "Scope and Variable Questions",
+                title: "Redeclaration Behavior",
+                code: `var a = 1;
+var a = 2;
+console.log(a); // ?
+
+let b = 1;
+let b = 2; // What happens?
+console.log(b);`,
+                answer: "2, then SyntaxError",
+                explanation: "var allows redeclaration in the same scope, let doesn't. The second let declaration causes a SyntaxError."
+            },
+            {
+                category: "Type Coercion Questions",
+                title: "Equality Operators",
+                code: `console.log(0 == false); // ?
+console.log(0 === false); // ?
+console.log('' == false); // ?
+console.log('' === false); // ?`,
+                answer: "true, false, true, false",
+                explanation: "== performs type coercion (0 and '' are falsy), === doesn't (different types)."
+            },
+            {
+                category: "Type Coercion Questions",
+                title: "Array Coercion",
+                code: `console.log([] == ![]); // ?
+console.log([] + []); // ?
+console.log([] + {}); // ?
+console.log({} + []); // ?`,
+                answer: "true, \"\", \"[object Object]\", \"[object Object]\"",
+                explanation: "Complex coercion rules: [] becomes '', ![] becomes false, {} becomes '[object Object]'."
+            },
+            {
+                category: "Type Coercion Questions",
+                title: "Number Coercion Tricks",
+                code: `console.log(+'123'); // ?
+console.log(+true); // ?
+console.log(+false); // ?
+console.log(+null); // ?
+console.log(+undefined); // ?`,
+                answer: "123, 1, 0, 0, NaN",
+                explanation: "Unary plus converts to number: strings parse, true=1, false=0, null=0, undefined=NaN."
+            },
+            {
+                category: "Object and Prototype Questions",
+                title: "Object Creation and Prototypes",
+                code: `function Person(name) {
+  this.name = name;
+}
+
+Person.prototype.greet = function() {
+  return 'Hello, ' + this.name;
+};
+
+var person = new Person('John');
+delete person.name;
+console.log(person.greet()); // ?`,
+                answer: "Hello, undefined",
+                explanation: "The instance property is deleted, but the prototype method still exists. this.name is now undefined."
+            },
+            {
+                category: "Object and Prototype Questions",
+                title: "Prototype Chain",
+                code: `function Animal() {}
+Animal.prototype.speak = function() { return 'Animal sound'; };
+
+function Dog() {}
+Dog.prototype = Object.create(Animal.prototype);
+Dog.prototype.speak = function() { return 'Woof'; };
+
+var dog = new Dog();
+console.log(dog.speak()); // ?
+console.log(dog instanceof Animal); // ?`,
+                answer: "Woof, true",
+                explanation: "Method overriding and prototype inheritance. Dog's speak method overrides Animal's, but instanceof still works."
+            },
+            {
+                category: "Event Loop and Asynchronous Questions",
+                title: "Event Loop Order",
+                code: `console.log('1');
+setTimeout(() => console.log('2'), 0);
+Promise.resolve().then(() => console.log('3'));
+console.log('4');`,
+                answer: "1, 4, 3, 2",
+                explanation: "Synchronous code runs first (1, 4), then microtasks/Promises (3), then macrotasks/setTimeout (2)."
+            },
+            {
+                category: "Event Loop and Asynchronous Questions",
+                title: "Promise Chain Gotcha",
+                code: `Promise.resolve('a')
+  .then((res) => {
+    console.log(res);
+    return 'b';
+  })
+  .then((res) => {
+    console.log(res);
+    throw new Error('c');
+  })
+  .then((res) => {
+    console.log(res);
+  })
+  .catch((err) => {
+    console.log(err.message);
+  });`,
+                answer: "a, b, c",
+                explanation: "The third .then is skipped due to the thrown error, which is caught by .catch."
+            },
+            {
+                category: "Function Questions",
+                title: "IIFE (Immediately Invoked Function Expression)",
+                code: `(function(x) {
+  return (function(y) {
+    console.log(x);
+  })(2);
+})(1);`,
+                answer: "1",
+                explanation: "The inner function has access to the outer function's parameter through closure."
+            },
+            {
+                category: "Function Questions",
+                title: "Function Name Property",
+                code: `var foo = function bar() {
+  console.log(typeof bar);
+};
+foo(); // ?
+console.log(typeof bar); // ?`,
+                answer: "function, undefined",
+                explanation: "Named function expressions create the name only within their own scope, not in the outer scope."
+            },
+            {
+                category: "Array Questions",
+                title: "Array Methods and Side Effects",
+                code: `var arr = [1, 2, 3];
+var result = arr.map(x => {
+  arr.pop();
+  return x * 2;
+});
+console.log(result); // ?
+console.log(arr); // ?`,
+                answer: "[2, 4], [1]",
+                explanation: "Modifying array during iteration affects the result. map processes fewer elements as array shrinks."
+            },
+            {
+                category: "Array Questions",
+                title: "Sparse Arrays",
+                code: `var arr = [1, , , 4];
+console.log(arr.length); // ?
+console.log(arr.map(x => x * 2)); // ?`,
+                answer: "4, [2, empty × 2, 8]",
+                explanation: "Holes in arrays are preserved by some methods. map skips empty slots but maintains array structure."
+            },
+            {
+                category: "String Questions",
+                title: "String Comparison",
+                code: `console.log('10' > '9'); // ?
+console.log('10' > 9); // ?
+console.log(10 > '9'); // ?`,
+                answer: "false, true, true",
+                explanation: "String comparison is lexicographical ('1' < '9'), mixed types are coerced to numbers."
+            },
+            {
+                category: "Advanced/Edge Case Questions",
+                title: "valueOf and toString",
+                code: `var obj = {
+  valueOf: () => 42,
+  toString: () => '10'
+};
+console.log(obj + 1); // ?
+console.log(String(obj)); // ?`,
+                answer: "43, 10",
+                explanation: "Numeric context prefers valueOf (42 + 1), string context prefers toString."
+            },
+            {
+                category: "Advanced/Edge Case Questions",
+                title: "Property Access Edge Case",
+                code: `var obj = {};
+obj[''] = 'empty string key';
+obj[' '] = 'space key';
+console.log(obj['']); // ?
+console.log(obj[' ']); // ?
+console.log(Object.keys(obj)); // ?`,
+                answer: "empty string key, space key, ['', ' ']",
+                explanation: "Empty strings and spaces are valid property keys in JavaScript objects."
+            },
+            {
+                category: "Advanced/Edge Case Questions",
+                title: "NaN Behavior",
+                code: `console.log(NaN === NaN); // ?
+console.log(Object.is(NaN, NaN)); // ?
+console.log(Number.isNaN(NaN)); // ?
+console.log(isNaN('hello')); // ?`,
+                answer: "false, true, true, true",
+                explanation: "NaN has unique equality behavior. === fails, Object.is works, isNaN coerces strings."
+            },
+            {
+                category: "Advanced/Edge Case Questions",
+                title: "Regular Expression Stateful Behavior",
+                code: `var regex = /test/g;
+console.log(regex.test('test')); // ?
+console.log(regex.test('test')); // ?`,
+                answer: "true, false",
+                explanation: "Global regexes maintain state (lastIndex) between calls. Second call starts after first match."
+            },
+            {
+                category: "Advanced/Edge Case Questions",
+                title: "Proxy Trap",
+                code: `var proxy = new Proxy({}, {
+  get: function(target, prop) {
+    return prop;
+  }
+});
+console.log(proxy.anything); // ?
+console.log(proxy[123]); // ?`,
+                answer: "anything, 123",
+                explanation: "Proxy intercepts all property access. The get trap returns the property name itself."
+            },
+            {
+                category: "Memory and Performance Gotchas",
+                title: "Delete Operator Misconceptions",
+                code: `var obj = { a: 1 };
+delete obj.a;
+console.log(obj.a); // ?
+
+var b = 2;
+delete b;
+console.log(b); // ?`,
+                answer: "undefined, 2",
+                explanation: "Delete works on object properties, not variables. Variable 'b' cannot be deleted."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let answeredQuestions = new Set();
+
+        function renderQuestion(index) {
+            const question = questions[index];
+            return `
+                <div class="bg-white rounded-lg shadow-lg p-6 mb-6 question-card" data-question="${index}">
+                    <div class="mb-4">
+                        <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mb-2">${question.category}</span>
+                        <h2 class="text-xl font-semibold text-gray-800">Question ${index + 1}: ${question.title}</h2>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <pre class="code-block p-4 rounded-lg overflow-x-auto text-sm"><code>${question.code}</code></pre>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="userAnswer${index}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Your Answer:
+                        </label>
+                        <textarea 
+                            id="userAnswer${index}" 
+                            class="user-answer w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                            placeholder="Write your answer here before checking the correct answer..."
+                            data-question="${index}"
+                        ></textarea>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <button class="check-answer-btn px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors" data-question="${index}">
+                            Check Answer
+                        </button>
+                    </div>
+                    
+                    <div class="answer-section answer-hidden" data-question="${index}">
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
+                                <h3 class="font-semibold text-blue-800 mb-2">Your Answer:</h3>
+                                <div class="user-answer-display text-blue-700 whitespace-pre-wrap font-mono text-sm bg-white p-2 rounded border" data-question="${index}">
+                                    <em class="text-gray-500">No answer provided</em>
+                                </div>
+                            </div>
+                            <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded">
+                                <h3 class="font-semibold text-green-800 mb-2">Correct Answer:</h3>
+                                <p class="text-green-700 mb-3 font-mono text-sm">${question.answer}</p>
+                                <h4 class="font-semibold text-green-800 mb-1">Explanation:</h4>
+                                <p class="text-green-700 text-sm">${question.explanation}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAllQuestions() {
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = questions.map((_, index) => renderQuestion(index)).join('');
+            
+            // Show only current question
+            showQuestion(currentQuestion);
+            
+            // Add event listeners for check answer buttons
+            document.querySelectorAll('.check-answer-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const questionIndex = parseInt(this.dataset.question);
+                    showAnswer(questionIndex);
+                });
+            });
+
+            // Add event listeners for textarea auto-save
+            document.querySelectorAll('.user-answer').forEach(textarea => {
+                textarea.addEventListener('input', function() {
+                    const questionIndex = parseInt(this.dataset.question);
+                    saveUserAnswer(questionIndex, this.value);
+                });
+            });
+        }
+
+        function showQuestion(index) {
+            document.querySelectorAll('.question-card').forEach((card, i) => {
+                card.style.display = i === index ? 'block' : 'none';
+            });
+            updateProgress();
+            updateNavigationButtons();
+            
+            // Load saved user answer
+            loadUserAnswer(index);
+        }
+
+        function showAnswer(questionIndex) {
+            const answerSection = document.querySelector(`[data-question="${questionIndex}"].answer-section`);
+            const button = document.querySelector(`[data-question="${questionIndex}"].check-answer-btn`);
+            const userAnswerTextarea = document.querySelector(`#userAnswer${questionIndex}`);
+            const userAnswerDisplay = document.querySelector(`[data-question="${questionIndex}"].user-answer-display`);
+            
+            // Display user's answer
+            const userAnswer = userAnswerTextarea.value.trim();
+            if (userAnswer) {
+                userAnswerDisplay.textContent = userAnswer;
+                userAnswerDisplay.classList.remove('text-gray-500');
+                userAnswerDisplay.classList.add('text-blue-700');
+            } else {
+                userAnswerDisplay.innerHTML = '<em class="text-gray-500">No answer provided</em>';
+            }
+            
+            answerSection.classList.remove('answer-hidden');
+            answerSection.classList.add('answer-visible');
+            button.textContent = 'Answer Revealed';
+            button.disabled = true;
+            button.classList.add('opacity-50', 'cursor-not-allowed');
+            
+            answeredQuestions.add(questionIndex);
+            updateProgress();
+        }
+
+        function saveUserAnswer(questionIndex, answer) {
+            localStorage.setItem(`userAnswer_${questionIndex}`, answer);
+        }
+
+        function loadUserAnswer(questionIndex) {
+            const savedAnswer = localStorage.getItem(`userAnswer_${questionIndex}`);
+            if (savedAnswer) {
+                document.querySelector(`#userAnswer${questionIndex}`).value = savedAnswer;
+            }
+        }
+
+        function clearAllUserAnswers() {
+            if (confirm('Are you sure you want to clear all your answers? This cannot be undone.')) {
+                // Clear from localStorage
+                for (let i = 0; i < questions.length; i++) {
+                    localStorage.removeItem(`userAnswer_${i}`);
+                }
+                
+                // Clear from textareas
+                document.querySelectorAll('.user-answer').forEach(textarea => {
+                    textarea.value = '';
+                });
+                
+                // Clear from displays
+                document.querySelectorAll('.user-answer-display').forEach(display => {
+                    display.innerHTML = '<em class="text-gray-500">No answer provided</em>';
+                });
+            }
+        }
+
+        function updateProgress() {
+            document.getElementById('progress').textContent = `${answeredQuestions.size}/30`;
+        }
+
+        function updateNavigationButtons() {
+            document.getElementById('prevBtn').disabled = currentQuestion === 0;
+            document.getElementById('nextBtn').disabled = currentQuestion === questions.length - 1;
+        }
+
+        function showAllAnswers() {
+            if (confirm('This will reveal all answers. Are you sure?')) {
+                questions.forEach((_, index) => {
+                    showAnswer(index);
+                });
+            }
+        }
+
+        function resetQuiz() {
+            if (confirm('This will reset the entire quiz and clear all progress. Are you sure?')) {
+                currentQuestion = 0;
+                answeredQuestions.clear();
+                
+                // Hide all answers and reset buttons
+                document.querySelectorAll('.answer-section').forEach(section => {
+                    section.classList.remove('answer-visible');
+                    section.classList.add('answer-hidden');
+                });
+                
+                document.querySelectorAll('.check-answer-btn').forEach(btn => {
+                    btn.textContent = 'Check Answer';
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                });
+                
+                showQuestion(0);
+                updateProgress();
+            }
+        }
+
+        // Initialize the quiz
+        document.addEventListener('DOMContentLoaded', function() {
+            renderAllQuestions();
+            
+            // Navigation event listeners
+            document.getElementById('prevBtn').addEventListener('click', function() {
+                if (currentQuestion > 0) {
+                    currentQuestion--;
+                    showQuestion(currentQuestion);
+                }
+            });
+            
+            document.getElementById('nextBtn').addEventListener('click', function() {
+                if (currentQuestion < questions.length - 1) {
+                    currentQuestion++;
+                    showQuestion(currentQuestion);
+                }
+            });
+            
+            document.getElementById('showAllAnswers').addEventListener('click', showAllAnswers);
+            document.getElementById('clearAllAnswers').addEventListener('click', clearAllUserAnswers);
+            document.getElementById('resetQuiz').addEventListener('click', resetQuiz);
+            
+            // Keyboard navigation
+            document.addEventListener('keydown', function(e) {
+                // Only handle navigation if not typing in textarea
+                if (document.activeElement.tagName === 'TEXTAREA') {
+                    return;
+                }
+                
+                if (e.key === 'ArrowLeft' && currentQuestion > 0) {
+                    currentQuestion--;
+                    showQuestion(currentQuestion);
+                } else if (e.key === 'ArrowRight' && currentQuestion < questions.length - 1) {
+                    currentQuestion++;
+                    showQuestion(currentQuestion);
+                } else if (e.key === 'Enter') {
+                    const button = document.querySelector(`[data-question="${currentQuestion}"].check-answer-btn`);
+                    if (button && !button.disabled) {
+                        button.click();
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
